@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref, watch, reactive, onMounted, onActivated } from 'vue';
+import { ref, onMounted } from 'vue';
 import { RepeatWrapping } from 'three';
 import {
   AmbientLight,
@@ -35,33 +35,20 @@ const rectLightsProps = {
         helper: true,
       }
 
-const renderer = ref(0)
-const light = ref(0)
-// const pointer = ref()
-
-const test = computed(() => {
-  if (!renderer.value) {
-    return 'nothing'
-  }
-  console.log(renderer.value)
-  return renderer.value.$pointer
-
-})
+const renderer = ref(null)
+const light = ref(null)
 
 onMounted(() => {
-  // renderer.value.onBeforeRender(() => {
-    // console.log(renderer.value.three.pointer.positionV3)
-    // console.log(light.value)
-    // console.log(renderer.value.three.pointer.positionV3)
-    // light.value.light.position.copy(pointerV3);
-  // });
+  const pointerV3 = renderer.value.three.pointer.positionV3
+    renderer.value.onBeforeRender(() => {
+      console.log(renderer.value.three, pointerV3)
+  })
 })
 
 </script>
 
 <template>
-  <v-card height=1000>
-    <Renderer ref="renderer" resize antialias :orbit-ctrl="{ autoRotate: false, enableDamping: true, dampingFactor: 0.05 }" >
+    <Renderer ref="renderer" resize antialias pointer :orbit-ctrl="{ autoRotate: false, enableDamping: true, dampingFactor: 0.05 }" >
       <Camera :position="{ x: 0, y: 0, z: 10 }" />
       <Scene background="#000000" >
         <!-- <AmbientLight color="red" /> -->
@@ -90,8 +77,4 @@ onMounted(() => {
         <FXAAPass />
       </EffectComposer>
     </Renderer>
-  </v-card>
-  <v-card>
-    {{test}}
-  </v-card>
 </template>

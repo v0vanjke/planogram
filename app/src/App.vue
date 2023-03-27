@@ -1,9 +1,10 @@
 <script setup>
-import Scene from "@/components/Scene"
-// import Test from "@/components/Test"
 </script>
 
 <template>
-  <Test />
-  <!-- <Scene /> -->
+    <router-view />
 </template>
+
+
+<style>
+</style>
