@@ -29,7 +29,7 @@ export const useApiStore = defineStore('api', () => {
         r: 0,
         vendor: "Victoria Stenova",
         collection: "Collection ONE",
-        articles: ["999888", "999887", "999886", "999885", "999884", "999883"]
+        articles: ["999887", "999886", "999885", "999884", "999883"]
       }
     }
   )
@@ -38,22 +38,32 @@ export const useApiStore = defineStore('api', () => {
     return (boxes[i])
   }
 
-  const moveBox = (i, x, y, h) => {
-    boxes[i].update({x: x, y: y, h: h})
+  const moveBox = (boxID, x, y) => {
+    boxes[boxID].x = x
+    boxes[boxID].y = y
   }
 
   const addBox = () => {
+
+    const index = ref(1)
+    for (const k in boxes) {
+      if (index.value > boxes[k].index) {
+        continue
+      }
+      index.value = boxes[k].index + 1
+    }
+
     boxes[Math.random() * 10] = {
-        index: 2,
-        shopID: "371",
-        boxID: "id_box",
-        x: 0,
-        y: 0,
-        h: 0,
-        r: 0,
-        vendor: "",
-        collection: "",
-        articles: []
+      index: index.value,
+      shopID: "371",
+      boxID: "id_box",
+      x: 0,
+      y: 0,
+      h: 0,
+      r: 0,
+      vendor: "",
+      collection: "",
+      articles: []
     }
   }
 

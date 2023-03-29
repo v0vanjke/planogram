@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, computed, reactive } from 'vue';
+import { ref, onMounted, watch, computed, reactive } from 'vue';
 import { GridHelper } from 'three';
 import {
   Group,
@@ -15,7 +15,7 @@ import {
   Plane,
   Scene,
 } from 'troisjs';
-import Box from '@/components/Box';
+import myBox from '@/components/Box';
 import { useApiStore } from '@/store/api';
 import { useAppStore } from '@/store/app';
 const apiStore = useApiStore()
@@ -30,9 +30,14 @@ const positionComputed = computed(() => {
 const renderer = ref(null)
 const scene = ref(null)
 
-const move_box = (boxID) => {
-}
-
+watch(
+  // если есть выбранные объекты - перестать вращать камеру
+  () => appStore.isSelectedBox,
+  (state) => {
+    renderer.value.three.cameraCtrl.enableRotate = !state
+    renderer.value.three.cameraCtrl.update()
+  },
+)
 
 onMounted(() => {
   const grid = new GridHelper(300, 30, "hsl(120, 100%, 80%)", "hsl(0, 1%, 92%)");
@@ -40,25 +45,27 @@ onMounted(() => {
   grid.material.transparent = true;
   scene.value.add(grid);
 
-  // const orbitCtrl = renderer.value.three.cameraCtrl
-// console.log(orbitCtrl)
-// orbitCtrl.enableRotate = false;
+  appStore.updateCameraCtrl(renderer.value.three.cameraCtrl)
 
+  const positionV3 = renderer.value.three.pointer.positionV3
+
+  const lastX = ref(0)
+  const lastY = ref(0)
   renderer.value.onBeforeRender(() => {
-    appStore.pointerV3.value = renderer.value.three.pointer.positionV3
-    // console.log(renderer.value.three.pointer.positionV3)
-    // console.log(renderer.value.three.cameraCtrl)
-    // appStore.positionV3 = renderer.value.three.pointer.positionV3
- })
+    if (
+      appStore.isSelectedBox
+      && (lastX.value !== Math.round(positionV3.x)
+      || lastY.value !== -Math.round(positionV3.z))
+    ) {
+      // выбрано оборудование. будем следить и двигать его туда сюда обратно
+      lastX.value = Math.round(positionV3.x)
+      lastY.value = -Math.round(positionV3.z)
+      for (const boxID of appStore.selectedBoxId) {
+        apiStore.moveBox(boxID, lastX.value, lastY.value)
+      }
+    }
+  })
 })
-
-const click_test = () => {
-  console.log('click test')
-}
-
-const onPointerOver = (event) => {
-  console.log(event)
-}
 
 </script>
 <template>
@@ -68,7 +75,7 @@ const onPointerOver = (event) => {
     pointer
     resize
     shadow
-    :orbit-ctrl="appStore.orbCtrl"
+    :orbit-ctrl="appStore.orbCtrlSettings"
   >
     <Camera :position="{ x: 0, y: 300, z: 0 }" />
 
@@ -76,7 +83,7 @@ const onPointerOver = (event) => {
       <HemisphereLight />
       <DirectionalLight cast-shadow :position="{ x: 500, y: 700, z: 300 }" />
       <Group :rotation="{ x: -Math.PI / 2 }">
-          <Box v-for="v, boxID in apiStore.boxes" :key="boxID" :boxID="boxID"/>
+          <myBox v-for="v, boxID in apiStore.boxes" :key="`myBox-${boxID}`" :boxID="boxID"/>
       </Group>
       <Plane :width="300" :height="300" :rotation="{ x: -Math.PI / 2 }" receive-shadow>
         <PhongMaterial color="#999999" :props="{ depthWrite: false }" />
@@ -87,12 +94,17 @@ const onPointerOver = (event) => {
     <v-btn text color="grey" @click="apiStore.addBox">
       add box
     </v-btn>
-    enableRotate:
-    {{appStore.orbCtrl.enableRotate}}
-    <br>
     appStore pointerV3:
     {{positionComputed}}
     <br>
+    selectedBoxId:
+    {{appStore.selectedBoxId}}
+    <br>
+    render:
+    {{appStore.render}}
+    <br>
+    overBoxID:
+    {{appStore.overBoxID}}
   </v-card>
 </template>
 

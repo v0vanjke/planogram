@@ -1,22 +1,17 @@
 <script setup>
-import { ref, computed, onMounted, watch } from "vue"
+import { ref, computed } from "vue"
 import {
   Box,
-  PhysicalMaterial,
   LambertMaterial,
   Text,
 } from 'troisjs';
+import Roll from '@/components/Roll';
 import { useApiStore } from '@/store/api';
 import { useAppStore } from '@/store/app';
 const apiStore = useApiStore()
 const appStore = useAppStore()
 
 const props = defineProps({
-  key: {
-    default: "",
-    type: String,
-    required: true,
-  },
   boxID: {
     default: "",
     type: String,
@@ -24,22 +19,45 @@ const props = defineProps({
   }
 })
 
-const isSelected = ref(false)
+const isSelected = computed(() => {
+  if ( !appStore.selectedBoxId.includes(props.boxID)) {
+    return false
+  }
+  return true
+})
 
 const over = ref(false)
+// const over = computed(() => {
+//   if (appStore.boxOverId === props.boxID) {
+//     return true
+//   }
+//   return false
+// })
+
 const boxOver = (val) => {
-  over.value = val.over
+  console.log(val)
+  if (val.over === false) {
+    appStore.unoverBox()
+    over.value = false
+  } else if (!appStore.overBoxID) {
+    over.value = true
+    appStore.overBox(props.boxID)
+  }
 }
 
-const click = ref(false)
-const boxClick = (val) => {
-  if (!isSelected.value) {
-    appStore.disableRotate()
+const boxClick = () => {
+  console.log(apiStore.boxes[props.boxID].articles)
+
+  if (isSelected.value) {
+    // console.log('unselect boxID', props.boxID)
+    appStore.unselectBox(props.boxID)
   }
   else {
-    appStore.enableRotate()
+    // console.log('  select boxID', props.boxID)
+    if (!appStore.isSelectedBox) {
+      appStore.selectBox(props.boxID)
+    }
   }
-  isSelected.value = !isSelected.value
 }
 
 
@@ -48,8 +66,7 @@ if (isSelected.value) {
   return 'green'
 }
   if (over.value) {
-   return 'orange'
- }
+   return 'orange'}
   return 'grey'
 }
 
@@ -60,46 +77,68 @@ const data = computed(() => {
   return apiStore.getBox(props.boxID)
 })
 
-const position = computed (() => {
-  return {x: 0, y: 0, z: 8}
-})
-
 </script>
 
 <template>
-    <Box
-      @pointerOver="boxOver"
-      cast-shadow
-      :width=11
-      :height=4
-      :depth=16
-      :rotation="{ z: Math.PI * 2 }"
-      :position="{x: data.x, y: data.y, z: 8}"
-      @click="boxClick">
-        <LambertMaterial :color="materialColor()"/>
-        <Text
-        :text="data.vendor"
-        align="center"
-        :size="0.3"
-        :height="0.01"
-        :position="{ x: 2, y: -2, z: 7 }"
-        :rotation="{ x: Math.PI / 2 }"
-        :cast-shadow="true"
-        font-src="https://troisjs.github.io/assets/helvetiker_regular.typeface.json"
+  <Box
+    :key="`box-${boxID}`"
+    @pointerOver="boxOver"
+    :width=10.9
+    :height=4
+    :depth=16
+    :rotation="{ z: Math.PI * 2 }"
+    :position="{x: data.x, y: data.y, z: 8}"
+    @click="boxClick">
+    <LambertMaterial :color="materialColor()"/>
+
+      <Roll
+        v-for="v, i in data.articles"
+        :key="`${boxID}-roll-${v}`"
+        :boxID="boxID"
+        :article="v"
+        :collection="data.collection"
+        :vendor="data.vendor"
+        :boxOver="over"
+
+        :height=0.4
+        :width=10
+        :depth=2
+        :position="{x: 0, y: -2.2, z: (i * 2.2) - 6.6 + ((6 - data.articles.length) * 2.2) }"
       >
-        <LambertMaterial color="black"/>
-      </Text>
-      <Text
-        :text="data.collection"
-        align="center"
-        :size="1"
-        :height="0.2"
-        :position="{ x: 0, y: -2, z: 6 }"
-        :rotation="{ x: Math.PI / 2 }"
-        :cast-shadow="true"
-        font-src="https://troisjs.github.io/assets/helvetiker_regular.typeface.json"
-      > </Text>
-    </Box>
+      </Roll>
+
+    <Text
+      :text="data.vendor"
+      align="center"
+      :size="0.3"
+      :height="0.01"
+      :position="{ x: 3, y: -2, z: 7.4 }"
+      :rotation="{ x: Math.PI / 2 }"
+      :cast-shadow="true"
+      font-src="https://troisjs.github.io/assets/helvetiker_regular.typeface.json"
+    >
+      <LambertMaterial color="black"/>
+    </Text>
+    <Text
+      :text="data.collection"
+      align="center"
+      :size="1"
+      :height="0.2"
+      :position="{ x: 0, y: -2, z: 6.4 }"
+      :rotation="{ x: Math.PI / 2 }"
+      :cast-shadow="true"
+      font-src="https://troisjs.github.io/assets/helvetiker_regular.typeface.json"
+    > </Text>
+    <Text
+      :text="`N${data.index}`"
+      align="center"
+      :size="1"
+      :height="0.2"
+      :position="{ x: 0, y: 0, z: 8 }"
+      :cast-shadow="true"
+      font-src="https://troisjs.github.io/assets/helvetiker_regular.typeface.json"
+    > </Text>
+  </Box>
 </template>
 
 <style scoped>
