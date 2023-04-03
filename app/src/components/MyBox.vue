@@ -129,11 +129,23 @@ const computedY = computed(() => {
       :height="computedY - thickness / 2"
       :depth="box.size.z - thickness / 2"
     >
-      <!-- @click="eventClick" -->
-
       <LambertMaterial :color="fillerColor()"/>
 
+      <Text
+        :text="`${Math.round(box.size.x * 100)} x ${Math.round(box.size.y * 100)} x ${Math.round(box.size.z * 100)} mm`"
+        align="center"
+        :size="0.5"
+        :height="0"
+        :position="{y: -box.size.y / 2 - thickness + 0.5, z: - box.size.z / 2 + 0.1}"
+        :cast-shadow="false"
+        font-src="https://troisjs.github.io/assets/helvetiker_regular.typeface.json"
+      >
+        <LambertMaterial color="hsl(200, 40%, 21%)"/>
+      </Text>
+
     </Box>
+
+    <!--📍 box number -->
     <Circle
       :radius="box.index > 999 ? 1.2 : 0.9"
       :segments=20

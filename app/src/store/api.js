@@ -140,38 +140,12 @@ export const useApiStore = defineStore('api', () => {
     }
     const box = snapShopBoxes[boxID]
     postHTTP(box)
+
     appStore.unoverBox(boxID)
     appStore.isSelectedBox = false
     appStore.selectedBoxID = null
     delete snapShopBoxes[boxID]
-    // appStore.unselectBox()
   }
-
-
-  // const copyBox = () => {
-
-  //   const index = ref(1)
-  //   for (const k in boxes) {
-  //     if (index.value > boxes[k].index) {
-  //       continue
-  //     }
-  //     index.value = boxes[k].index + 1
-  //   }
-
-  //   boxes[Math.random() * 10] = {
-  //     index: index.value,
-  //     shopID: "371",
-  //     boxID: "id_box",
-  //     x: 0,
-  //     y: 0,
-  //     h: 0,
-  //     r: 0,
-  //     vendor: "",
-  //     collection: "",
-  //     articles: []
-  //   }
-  // }
-
 
   return {
     apiCollections,
