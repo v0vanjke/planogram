@@ -1,0 +1,136 @@
+// 📍 API Store
+import axios from 'axios'
+import { ref, reactive, computed } from 'vue'
+import { defineStore } from 'pinia'
+
+export const useApiStore = defineStore('api', () => {
+
+  const getRequestData = async (url, filter) => {
+    console.log('axios', url, filter)
+    const res = await axios({ url: url, data: filter })
+    return res.data.response
+  }
+
+  const snapApiCollection = ref([])      // коллекции из API
+  const snapApiGoods = reactive({})      // номенклатура из API
+  const snapApiBoxes = ref({})           // коробки из API
+
+  const snapMyCollection = reactive({})  // коллекции пользовательские
+  const snapShopBoxes = reactive({})     // оборудование по магазинам
+  const snapShops = reactive({})         // оборудование по магазинам
+
+  const apiCollections = computed(() => {
+    const getHTTP = async () => {
+      const req = await getRequestData('get/collections', {})
+      if (typeof req === 'object') {
+        snapApiCollection.value = req
+        return snapApiCollection
+      }
+    }
+    if (snapApiCollection.value.length > 0) {
+      return snapApiCollection.value
+    }
+    getHTTP()
+    return snapApiCollection
+  })
+
+  const apiBoxes = computed(() => {
+    const getHTTP = async () => {
+      const req = await getRequestData('get/boxes', {})
+      if (typeof req === 'object') {
+        snapApiBoxes.value = req
+        return snapApiBoxes.value
+      }
+    }
+    if (snapApiBoxes.value.length > 0) {
+      return snapApiBoxes.value
+    }
+    getHTTP()
+    return snapApiBoxes.value
+  })
+
+  const boxes = reactive(
+    {
+      "64141c50579e718b714edc1d":
+      {
+        index: 1,
+        shopID: "371",
+        boxID: "id_box",
+        x: 20,
+        y: 30,
+        h: 0,
+        r: 0,
+        vendor: "Victoria Stenova",
+        collection: "Collection TWO",
+        articles: ["999888", "999887", "999886", "999885", "999884", "999883"]
+      },
+      "64133333579e718b714edc1d":
+      {
+        index: 2,
+        shopID: "371",
+        boxID: "id_box",
+        x: 10,
+        y: 10,
+        h: 0,
+        r: 0,
+        vendor: "Victoria Stenova",
+        collection: "Collection ONE",
+        articles: ["999887", "999886", "999885", "999884", "999883"]
+      }
+    }
+  )
+
+  const getBox = (i) => {
+    return (boxes[i])
+  }
+
+  const moveBox = (boxID, x, y) => {
+    boxes[boxID].x = x
+    boxes[boxID].y = y
+  }
+  const addDefaultBox = (boxID) => {
+    console.log(apiBoxes.value)
+    for (const i in apiBoxes.value) {
+      console.log(apiBoxes.value[i]._id, boxID)
+      if (apiBoxes.value[i]._id === boxID) {
+        boxes[`temp-${boxID}`] = { ...apiBoxes.value[i], hello: 'nice' }
+      }
+    }
+    return true
+  }
+
+  const copyBox = () => {
+
+    const index = ref(1)
+    for (const k in boxes) {
+      if (index.value > boxes[k].index) {
+        continue
+      }
+      index.value = boxes[k].index + 1
+    }
+
+    boxes[Math.random() * 10] = {
+      index: index.value,
+      shopID: "371",
+      boxID: "id_box",
+      x: 0,
+      y: 0,
+      h: 0,
+      r: 0,
+      vendor: "",
+      collection: "",
+      articles: []
+    }
+  }
+
+
+  return {
+    apiCollections,
+    apiBoxes,
+    boxes,
+    getBox,
+    moveBox,
+    copyBox,
+    addDefaultBox,
+  }
+})

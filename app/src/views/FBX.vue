@@ -1,81 +1,104 @@
 <template>
-  <Renderer ref="renderer" antialias :orbit-ctrl="{ enableDamping: true, target }" resize shadow>
-    <Camera :position="{ x: 100, y: 200, z: 300 }" />
-    <Scene ref="scene" background="#a0a0a0">
-      <HemisphereLight />
+  <Renderer ref="renderer" antialias resize :orbit-ctrl="{ enableDamping: true, dampingFactor: 0.05 }" pointer shadow>
+    <Camera :position="{ z: 20 }" />
+    <Scene>
+      <AmbientLight color="#808080" />
+      <PointLight ref="light" cast-shadow :shadow-map-size="{ width: 1024, height: 1024 }" />
 
-      <DirectionalLight
-        :position="{ x: 0, y: 200, z: 100 }"
-        cast-shadow :shadow-camera="{ top: 180, bottom: -120, left: -120, right: 120 }"
-      />
+      <InstancedMesh ref="imesh" :count="NUM_INSTANCES" cast-shadow receive-shadow>
+        <BoxGeometry :size="SIZE" />
+        <PhongMaterial color="#9C1E15" />
+      </InstancedMesh>
 
-      <Plane :width="2000" :height="2000" :rotation="{ x: -Math.PI / 2 }" receive-shadow>
-        <PhongMaterial color="#999999" :props="{ depthWrite: false }" />
+      <Plane :width="W*2" :height="H*2" :position="{ z: -10 - SIZE }" receive-shadow>
+        <PhongMaterial color="#9C1E15" />
       </Plane>
-
     </Scene>
   </Renderer>
 </template>
 
 <script>
-// Model from mixamo.com
-import { AnimationMixer, Clock, Fog, GridHelper, Vector3 } from 'three';
+import { Object3D } from 'three';
+
 import {
   AmbientLight,
+  BoxGeometry,
   Camera,
-  DirectionalLight,
-  FbxModel,
-  HemisphereLight,
-  Renderer,
+  InstancedMesh,
   PhongMaterial,
   Plane,
+  PointLight,
+  Renderer,
   Scene,
 } from 'troisjs';
 
 export default {
   components: {
     AmbientLight,
+    BoxGeometry,
     Camera,
-    DirectionalLight,
-    FbxModel,
-    HemisphereLight,
-    Renderer,
+    InstancedMesh,
     PhongMaterial,
     Plane,
+    PointLight,
+    Renderer,
     Scene,
+  },
+  setup() {
+    const SIZE = 1.5, NX = 20, NY = 20, PADDING = 1;
+    const SIZEP = SIZE + PADDING;
+    const W = NX * SIZEP - PADDING;
+    const H = NY * SIZEP - PADDING;
+    return {
+      SIZE, NX, NY, PADDING,
+      SIZEP, W, H,
+      NUM_INSTANCES: NX * NY,
+    };
   },
   data() {
     return {
-      target: new Vector3(0, 100, 0),
     };
   },
   mounted() {
-    const scene = this.$refs.scene.scene;
-    scene.fog = new Fog(0xa0a0a0, 200, 1000);
+    this.renderer = this.$refs.renderer;
+    this.pointer = this.renderer.three.pointer;
 
-    const grid = new GridHelper(2000, 20, 0x000000, 0x000000);
-    grid.material.opacity = 0.5;
-    grid.material.transparent = true;
-    this.$refs.scene.add(grid);
+    this.imesh = this.$refs.imesh.mesh;
+    this.light = this.$refs.light.light;
+
+    this.dummy = new Object3D();
+
+    this.renderer.onBeforeRender(this.animate);
   },
   methods: {
-    onLoad(object) {
-      this.mixer = new AnimationMixer(object);
-      const action = this.mixer.clipAction(object.animations[0]);
-      action.play();
-
-      object.traverse(function (child) {
-        if (child.isMesh) {
-          child.castShadow = true;
-          child.receiveShadow = true;
-        }
-      });
-
-      this.clock = new Clock();
-      this.$refs.renderer.onBeforeRender(this.updateMixer);
+    animate() {
+      this.light.position.x = this.pointer.positionV3.x;
+      this.light.position.y = this.pointer.positionV3.y;
+      this.updateInstanceMatrix();
     },
-    updateMixer() {
-      this.mixer.update(this.clock.getDelta());
+    updateInstanceMatrix() {
+      const x0 = -this.W / 2 + this.PADDING;
+      const y0 = -this.H / 2 + this.PADDING;
+      const time = Date.now() * 0.0001;
+      const mx = this.pointer.positionN.x * 0.1;
+      const my = this.pointer.positionN.y * 0.1;
+      const noise = 0.005;
+      let x, y, nx, ny, rx, ry;
+      for (let i = 0; i < this.NX; i++) {
+        for (let j = 0; j < this.NY; j++) {
+          x = x0 + i * this.SIZEP;
+          y = y0 + j * this.SIZEP;
+          nx = x * noise + mx;
+          ny = y * noise + my;
+          rx = 0.1;
+          ry = 0.2;
+          this.dummy.position.set(x, y, -10);
+          this.dummy.rotation.set(rx, ry, 0);
+          this.dummy.updateMatrix();
+          this.imesh.setMatrixAt(i * this.NY + j, this.dummy.matrix);
+        }
+      }
+      this.imesh.instanceMatrix.needsUpdate = true;
     },
   },
 };

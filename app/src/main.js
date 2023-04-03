@@ -18,3 +18,7 @@ const app = createApp(App)
 registerPlugins(app)
 
 app.mount('#app')
+
+// Axios
+import { axiosSetUp } from './@helpers/axios'
+axiosSetUp()

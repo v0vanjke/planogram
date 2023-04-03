@@ -5,6 +5,7 @@ from flask import Flask
 from flask import request
 from flask_cors import CORS
 from bson.objectid import ObjectId
+import requests
 
 from db import get_table
 from db import db_box
@@ -30,16 +31,26 @@ app.debug = True
 @app.route("/get/boxes", methods=["GET", "POST"], endpoint="box_list")
 def box_list():
     # список торгового оборудования
-    return (
-        json.dumps({"response": [BOX(**el).json for el in db_box.find()]}, default=str),
-        200,
-    )
+    ret = {}
+    for el in db_box.find():
+        ret.update(BOX(**el).frontend_json)
+    return json.dumps({"response": ret}, default=str), 200
 
 
-@app.route("/get/collections", methods=["GET", "POST"], endpoint="collection")
-def collection():
-    # коллекции будем брать из api
-    return {}, 200
+@app.route("/get/collections", methods=["GET", "POST"], endpoint="get_collections")
+def get_collections():
+    h = {"apiKey": E.get("oboiru-api-key"), "Content-Type": "application/json"}
+    resp = requests.post("https://api.oboi.ru/v3/collection", headers=h)
+
+    if resp.status_code != 200:
+        return {"error": f"api return status code {resp.status_code}"}, 400
+    # удалю описание коллекции из ответа
+    # нужна мемоизация
+    clearable_response = [
+        {k: v for k, v in el.items() if k != "description"}
+        for el in resp.json().get("response")
+    ]
+    return json.dumps({"response": clearable_response}, default=str), 200
 
 
 @app.route("/get/shops", methods=["GET", "POST"], endpoint="shop")
@@ -64,36 +75,29 @@ def shop_add():
     return {}, 200
 
 
+@app.route("/shop/<shopID>/get/boxes", methods=["GET", "POST"], endpoint="shop_box")
+def shop_box(shopID):
+    # список оборудования в магазине
+    ret = {}
+    for el in get_table("tapeti", "boxes").find({"shopID": shopID}):
+        ret.update(SHOPBOX(**el).frontend_json)
+    return (
+        json.dumps({"response": ret}, default=str),
+        200,
+    )
+
+
 @app.route("/shop/<shopID>/add/box", methods=["POST"], endpoint="shop_box_add")
 def shop_box_add(shopID):
     # привязать оборудование к магазину
     data = request.json or {}
-    if not data.get("boxID"):
-        return {"error": "boxID not founded"}, 400
-    box = SHOPBOX(
-        _id=ObjectId(),
-        index=1,
-        shopID=shopID,
-        boxID=data["boxID"],
-        x=data.get("x"),
-        y=data.get("y"),
-        h=data.get("h"),
-    )
-
-    box.create(get_table("tapeti", "boxes"))
-    return json.dumps(box.json, default=str), 200
-
-
-@app.route("/shop/<shopID>/get/boxes", methods=["GET", "POST"], endpoint="shop_box")
-def shop_box(shopID):
-    # список оборудования в магазине
+    data.update({"shopID": shopID})
     return (
         json.dumps(
             {
-                "response": [
-                    SHOPBOX(el).json
-                    for el in get_table("tapeti", "box").findall({"shopID": shopID})
-                ]
+                "response": SHOPBOX(**data)
+                .save(get_table("tapeti", "boxes"))
+                .frontend_json
             },
             default=str,
         ),
@@ -101,26 +105,24 @@ def shop_box(shopID):
     )
 
 
-@app.route("/box/update", methods=["POST"], endpoint="shop_box_update")
-def shop_box_update():
+@app.route("/shop/<shopID>/upgrade/box", methods=["POST"], endpoint="shop_box_update")
+def shop_box_update(shopID):
     # изменить параметры оборудования
     data = request.json or {}
-    if not data.get("_id"):
-        return {"error": "_id not founded"}, 400
-    box = SHOPBOX(**data)
-    box.save(get_table("tapeti", "boxes"))
-    return {"result": True}, 200
+    data.update({"shopID": shopID})
+    SHOPBOX(**data).save(get_table("tapeti", "boxes"))
+    return {"response": True}, 200
 
 
-@app.route("/box/delete", methods=["POST"], endpoint="shop_box_delete")
-def shop_box_delete():
+@app.route("/delete/box/<boxID>", methods=["POST"], endpoint="shop_box_delete")
+def shop_box_delete(boxID):
     # удалить оборудование
     data = request.json or {}
-    if not data.get("_id"):
+    if not boxID:
         return {"error": "_id not founded"}, 400
-    box = SHOPBOX(**data)
+    box = SHOPBOX(_id=boxID, **data)
     box.delete(get_table("tapeti", "boxes"))
-    return {}, 200
+    return {"response": True}, 200
 
 
 if __name__ == "__main__":
