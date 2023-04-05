@@ -53,10 +53,11 @@ export const useAppStore = defineStore('app', () => {
 
 
   //📍 CAMERA
-  const cameraCtrl = ref(null)
-  const updateCameraCtrl = (val) => {
-    cameraCtrl.value = val
-  }
+  // const cameraCtrl = ref(null)
+  const cameraAzimuth = ref(0)
+  // const updateCameraCtrl = (val) => {
+  //   cameraCtrl.value = val
+  // }
 
   const orbCtrlSettings = {
     autoRotate: false,
@@ -68,7 +69,7 @@ export const useAppStore = defineStore('app', () => {
     minPolarAngle: 0.01,
 
     minDistance: 50,
-    maxDistance: 300,
+    maxDistance: 500,
 
     // minAzimuthAngle: -1.56,
     // maxAzimuthAngle: 1.56,
@@ -146,8 +147,9 @@ export const useAppStore = defineStore('app', () => {
     changeMode,
     roomPlannerSubmenu,
 
-    cameraCtrl,
-    updateCameraCtrl,
+    // cameraCtrl,
+    cameraAzimuth,
+    // updateCameraCtrl,
 
     overBoxID,
     overBox,

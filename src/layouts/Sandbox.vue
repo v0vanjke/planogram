@@ -5,9 +5,9 @@
 <template>
   <v-card>
     <v-layout>
-      <NavigationDrawer />
       <v-main>
         <v-app>
+          <NavigationDrawer />
           <router-view />
         </v-app>
       </v-main>

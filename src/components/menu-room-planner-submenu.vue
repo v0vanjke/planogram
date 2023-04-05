@@ -67,7 +67,7 @@ onUnmounted (() => {
 <template>
   <v-card
     flat
-    class="glass text-white"
+    class="glass text-white rounded-xl"
     width="200"
     :style="`position: absolute; top: ${position.y - 298}px; left: ${position.x + 20}px`"
     >

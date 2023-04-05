@@ -33,6 +33,7 @@ def box_list():
     # список торгового оборудования
     ret = {}
     for el in db_box.find():
+        print(el)
         ret.update(BOX(**el).frontend_json)
     return json.dumps({"response": ret}, default=str), 200
 

@@ -19,6 +19,7 @@ class BOX:
         self,
         _id: ObjectId,
         name: str,
+        group: str,
         vendor: str,
         size: dict,
         shelf: int = 1,
@@ -26,6 +27,7 @@ class BOX:
     ):
         self._id = _id
         self.name = name
+        self.group = group
         self.vendor = vendor
         self.size = size
         self.shelf = shelf  # кол-во полок
@@ -71,6 +73,8 @@ class SHOP:
         self.shopID = shopID
         self.name = name
         self.size = size
+        self.x = x
+        self.y = y
 
     @property
     def json(self):
@@ -99,6 +103,24 @@ class SHOPWALL:
         self.points = points
 
 
+class SHOPCOLLECTION:
+    """коллекции на плане магазина"""
+
+    def __init__(self, _id: ObjectId, name: str, vendor: str, articles: list):
+        self._id = _id
+        self.name = name
+        self.vendor = vendor
+        self.articles = articles
+
+    @property
+    def json(self):
+        return {k: v for k, v in self.__dict__.items() if not k.startswith("_")}
+
+    @property
+    def frontend_json(self):
+        return {str(self._id): self.json}
+
+
 class SHOPBOX:
     def __init__(
         self,
@@ -110,6 +132,8 @@ class SHOPBOX:
         rotation: dict,
         collection: list = [],
         articles: list = [],
+        shelf: int = 1,
+        volume: int = 1,
     ):
         self._id = _id or None
         self.index = index
@@ -119,6 +143,8 @@ class SHOPBOX:
         self.position = position
         self.collection = collection
         self.articles = articles
+        self.shelf = shelf  # кол-во полок
+        self.volume = volume  # объем
 
     @property
     def json(self):

@@ -14,6 +14,7 @@
     "core-js": "^3.8.3",
     "pinia": "^2.0.23",
     "roboto-fontface": "*",
+    "stats.js": "^0.17.0",
     "three": "0.134",
     "troisjs": "^0.3.4",
     "vue": "^3.2.13",

@@ -99,6 +99,8 @@ export const useApiStore = defineStore('api', () => {
         {
           _id: null,
           index: maxIndexBox() || 9999,
+          shelf: box.shelf || 1,
+          volume: box.volume || 1,
           size: box.size || { x: 10, y: 10, z: 10 },
           position: box.position || { x: 0, y: 0, z: 0 },
           rotation: box.rotation || { x: 0, y: 0, z: 0 },
