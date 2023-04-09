@@ -83,16 +83,36 @@ export const useApiStore = defineStore("api", () => {
     snapShopCollection[collectionID].position.z = z;
   };
 
+  const updateShopCollection = (collectionID) => {
+    const postHTTP = async (collection) => {
+      const req = await getRequestData(
+        `shop/${shopID.value}/update/collection`,
+        collection
+      );
+      if (!req) {
+        console.error("not saved");
+      }
+    };
+    const collection = {
+      ...snapShopCollection[collectionID],
+      _id: collectionID,
+    };
+    postHTTP(collection);
+  };
+
   const addShopCollection = (collection) => {
     const postHTTP = async () => {
-      const req = await getRequestData(`shop/${shopID.value}/add/collection`, {
-        _id: null,
-        name: collection.name || "default",
-        vendor: collection.vendor || "",
-        articles: collection.articles || ["default"],
-        boxID: collection.boxID || false,
-        position: collection.position || { x: 0, y: 0, z: 0 },
-      });
+      const req = await getRequestData(
+        `shop/${shopID.value}/update/collection`,
+        {
+          _id: null,
+          name: collection.name || "default",
+          vendor: collection.vendor || "",
+          articles: collection.articles || ["default"],
+          boxID: collection.boxID || false,
+          position: collection.position || { x: 0, y: 0, z: 0 },
+        }
+      );
       if (typeof req === "object") {
         for (const collectionID in req) {
           snapShopCollection[collectionID] = req[collectionID];
@@ -162,7 +182,7 @@ export const useApiStore = defineStore("api", () => {
 
   const addShopBox = (box) => {
     const postHTTP = async () => {
-      const req = await getRequestData(`shop/${shopID.value}/add/box`, {
+      const req = await getRequestData(`shop/${shopID.value}/update/box`, {
         _id: null,
         index: maxIndexBox() || 1,
         shelf: box.shelf || 1,
@@ -183,7 +203,7 @@ export const useApiStore = defineStore("api", () => {
 
   const updateShopBox = (boxID) => {
     const postHTTP = async (box) => {
-      const req = await getRequestData(`shop/${shopID.value}/add/box`, box);
+      const req = await getRequestData(`shop/${shopID.value}/update/box`, box);
       if (!req) {
         console.error("not saved");
       }
@@ -227,6 +247,7 @@ export const useApiStore = defineStore("api", () => {
 
     shopCollections,
     addShopCollection,
+    updateShopCollection,
     moveShopCollection,
     deleteShopCollection,
 

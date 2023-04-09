@@ -1,62 +1,61 @@
 // 📍 Collection - коллекции товара
 <script setup>
-import { ref, computed, onMounted } from "vue"
+import { ref, computed, onMounted } from "vue";
 import {
-    Box,
-    Circle,
-    Group,
-    LambertMaterial,
-    Text,
-    Plane,
-    RectAreaLight,
-} from 'troisjs';
+  Box,
+  Circle,
+  Group,
+  LambertMaterial,
+  Text,
+  Plane,
+  RectAreaLight,
+} from "troisjs";
 // import Article from '@/components/Article';
-import { useApiStore } from '@/store/api';
-import { useAppStore } from '@/store/app';
-const apiStore = useApiStore()
-const appStore = useAppStore()
+import { useApiStore } from "@/store/api";
+import { useAppStore } from "@/store/app";
+const apiStore = useApiStore();
+const appStore = useAppStore();
 
 const props = defineProps({
-    id: {
-        default: "",
-        type: String,
-        required: true,
-    },
-    size: {
-        default: { x: 1.1, y: 0.3, z: 0.3 },
-        type: Object,
-        required: false,
-    }
-})
+  id: {
+    default: "",
+    type: String,
+    required: true,
+  },
+  size: {
+    default: { x: 1.1, y: 0.3, z: 0.3 },
+    type: Object,
+    required: false,
+  },
+});
 
 const data = computed(() => {
-    return apiStore.shopCollections[props.id]
-})
-
+  return apiStore.shopCollections[props.id];
+});
 
 //📍 SELECT
 const isSelected = computed(() => {
-    if (appStore.selectedCollectionID === props.id) {
-        return true
-    }
-    return false
-})
+  if (appStore.selectedCollectionID === props.id) {
+    return true;
+  }
+  return false;
+});
 
 //📍 OVER
 const isOver = computed(() => {
-    if (appStore.overCollectionID[0] === props.id) {
-        return true
-    }
-    return false
-})
+  if (appStore.overCollectionID[0] === props.id) {
+    return true;
+  }
+  return false;
+});
 
 const eventOver = (val) => {
-    if (val.over === false) {
-        appStore.unoverCollection(props.id)
-    } else {
-        appStore.overCollection(props.id)
-    }
-}
+  if (val.over === false) {
+    appStore.unoverCollection(props.id);
+  } else {
+    appStore.overCollection(props.id);
+  }
+};
 
 //📍 COLOR
 // const fillerColor = () => {
@@ -89,30 +88,46 @@ const eventOver = (val) => {
 // }
 //
 const collectionColor = () => {
-    return 'hsl(0, 100%, 50%)'
-}
-
+  if (isOver.value && !isSelected.value) {
+    return "hsl(30, 70%, 30%)";
+  }
+  return "hsl(200, 30%, 50%)";
+};
 
 //📍 BOX SIZES
 const computedX = computed(() => {
-    return props.size.x
-})
+  return props.size.x;
+});
 const computedY = computed(() => {
-    return props.size.y
-})
+  return props.size.y;
+});
 const computedZ = computed(() => {
-    return props.size.z
-})
-
+  return props.size.z;
+});
 </script>
 
 <template>
-    <Group :position="{ ...data.position, z: data.position.z + computedZ / 2 }">
-        <Box :width=10 :height=10 :depth=10>
-            <LambertMaterial :color="collectionColor()" />
-        </Box>
-    </Group>
+  <!-- <Group :position="{ ...data.position, z: data.position.z + computedZ / 2 }"> -->
+  <!-- </Group> -->
+  <Box
+    @pointerOver="eventOver"
+    :width="10"
+    :height="10"
+    :depth="10"
+    :position="{ ...data.position, z: data.position.z + computedZ / 2 }"
+  >
+    <LambertMaterial :color="collectionColor()" />
+    <Text
+      text="text"
+      align="center"
+      :size="1"
+      :height="0"
+      :position="{ z: 5.01 }"
+      font-src="https://troisjs.github.io/assets/helvetiker_regular.typeface.json"
+    >
+      <LambertMaterial color="black" />
+    </Text>
+  </Box>
 </template>
 
-<style scoped>
-</style>
+<style scoped></style>

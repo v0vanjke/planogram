@@ -4,7 +4,8 @@ import json
 from flask import Flask
 from flask import request
 from flask_cors import CORS
-from bson.objectid import ObjectId
+
+# from bson.objectid import ObjectId
 import requests
 
 from db import get_table
@@ -18,14 +19,15 @@ from planogram import SHOPCOLLECTION
 
 from dotenv import load_dotenv
 from os import environ as E
-from pprint import pprint as pp
+
+# from pprint import pprint as pp
 
 
 load_dotenv()
 
 
 app = Flask(__name__)
-cors = CORS(app, supports_credentials=True, resources={r"*": {"origins": "*"}})
+CORS(app, supports_credentials=True, resources={r"*": {"origins": "*"}})
 app.debug = True
 
 
@@ -106,9 +108,11 @@ def shop_collections(shopID):
 
 
 @app.route(
-    "/shop/<shopID>/add/collection", methods=["POST"], endpoint="shop_collection_add"
+    "/shop/<shopID>/update/collection",
+    methods=["POST"],
+    endpoint="shop_collection_update",
 )
-def shop_collection_add(shopID):
+def shop_collection_update(shopID):
     # привязать оборудование к магазину
     data = request.json or {}
     data.update({"shopID": shopID})
@@ -125,7 +129,22 @@ def shop_collection_add(shopID):
     )
 
 
-@app.route("/shop/<shopID>/add/box", methods=["POST"], endpoint="shop_box_add")
+@app.route(
+    "/delete/collection/<collectionID>",
+    methods=["POST"],
+    endpoint="shop_collection_delete",
+)
+def shop_collection_delete(collectionID):
+    # удалить оборудование
+    data = request.json or {}
+    if not collectionID:
+        return {"error": "_id not founded"}, 400
+    box = SHOPCOLLECTION(_id=collectionID, **data)
+    box.delete(get_table("tapeti", "collections"))
+    return {"response": True}, 200
+
+
+@app.route("/shop/<shopID>/update/box", methods=["POST"], endpoint="shop_box_add")
 def shop_box_add(shopID):
     # привязать оборудование к магазину
     data = request.json or {}
@@ -143,13 +162,14 @@ def shop_box_add(shopID):
     )
 
 
-@app.route("/shop/<shopID>/upgrade/box", methods=["POST"], endpoint="shop_box_update")
-def shop_box_update(shopID):
-    # изменить параметры оборудования
-    data = request.json or {}
-    data.update({"shopID": shopID})
-    SHOPBOX(**data).save(get_table("tapeti", "boxes"))
-    return {"response": True}, 200
+#
+# @app.route("/shop/<shopID>/update/box", methods=["POST"], endpoint="shop_box_update")
+# def shop_box_update(shopID):
+#     # изменить параметры оборудования
+#     data = request.json or {}
+#     data.update({"shopID": shopID})
+#     SHOPBOX(**data).save(get_table("tapeti", "boxes"))
+#     return {"response": True}, 200
 
 
 @app.route("/delete/box/<boxID>", methods=["POST"], endpoint="shop_box_delete")
