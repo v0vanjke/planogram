@@ -1,85 +1,117 @@
+// 📍 Collection - коллекции товара
 <script setup>
-import { ref, onMounted} from "vue"
+import { ref, computed, onMounted } from "vue"
 import {
-  Box,
-  LambertMaterial,
-  Text,
+    Box,
+    Circle,
+    Group,
+    LambertMaterial,
+    Text,
+    Plane,
+    RectAreaLight,
 } from 'troisjs';
+// import Article from '@/components/Article';
 import { useApiStore } from '@/store/api';
 import { useAppStore } from '@/store/app';
 const apiStore = useApiStore()
 const appStore = useAppStore()
 
 const props = defineProps({
-  collection: {
-    default: "",
-    type: String,
-    required: false,
-  },
+    id: {
+        default: "",
+        type: String,
+        required: true,
+    },
+    size: {
+        default: { x: 1.1, y: 0.3, z: 0.3 },
+        type: Object,
+        required: false,
+    }
 })
 
-const isSelected = ref(false)
+const data = computed(() => {
+    return apiStore.shopCollections[props.id]
+})
 
-const over = ref(false)
-const collectionOver = (val) => {
-  if (over.value === true && val === false && isSelected.value === true) {
-    isSelected.value = false
-  }
-  over.value = val.over
+
+//📍 SELECT
+const isSelected = computed(() => {
+    if (appStore.selectedCollectionID === props.id) {
+        return true
+    }
+    return false
+})
+
+//📍 OVER
+const isOver = computed(() => {
+    if (appStore.overCollectionID[0] === props.id) {
+        return true
+    }
+    return false
+})
+
+const eventOver = (val) => {
+    if (val.over === false) {
+        appStore.unoverCollection(props.id)
+    } else {
+        appStore.overCollection(props.id)
+    }
 }
 
-const materialColor = () => {
-  if (over.value) {
-   return 'orange'}
-  return 'white'
+//📍 COLOR
+// const fillerColor = () => {
+//   return 'hsl(27, 35%, 30%)'
+//   // return 'hsl(0, 0%, 30%)'
+// }
+//
+// const wallColor = () => {
+//   // if (isSelected.value) {return 'hsl(80, 80%, 15%)'}
+//   if (isOver.value && !isSelected.value) {return 'hsl(30, 100%, 20%)'}
+//   return 'hsl(0, 0%, 10%)'
+//   // return 'hsl(27, 35%, 30%)'
+// }
+//
+// const backWallColor = () => {
+//   // if (isSelected.value) {return 'hsl(80, 80%, 15%)'}
+//   if (isOver.value && !isSelected.value) {return 'hsl(30, 100%, 20%)'}
+//   return 'hsl(0, 0%, 10%)'
+//   // return 'hsl(27, 35%, 30%)'
+// }
+// const shadowBoxColor = () => {
+//   return 'hsl(195, 80%, 10%)'
+// }
+// const shadowBorderColor = () => {
+//   return 'hsl(95, 100%, 30%)'
+// }
+//
+// const numberColor = () => {
+//   return 'hsl(200, 30%, 20%)'
+// }
+//
+const collectionColor = () => {
+    return 'hsl(0, 100%, 50%)'
 }
 
-const textColor = () => {
-  if (isSelected.value) {
-    return 'red'
-  }
-  if (over.value) {
-   return 'white'}
-  return 'orange'
-}
 
-const box = ref(null)
-const isSelected = ref(false)
-
-const boxClick = () => {
-  if (appStore.mode === 'goodsPlanner') {
-    isSelected.value = !isSelected.value
-  }
-}
+//📍 BOX SIZES
+const computedX = computed(() => {
+    return props.size.x
+})
+const computedY = computed(() => {
+    return props.size.y
+})
+const computedZ = computed(() => {
+    return props.size.z
+})
 
 </script>
 
 <template>
-  <Box
-    ref="box"
-    :key="`${boxID}-article-${article}`"
-    @pointerOver="collectionOver"
-    :height=2
-    :width=10
-    :depth=2
-    :position="{ x: 0, y: 0, z: 0 }"
-    @click="boxClick"
-  >
-    <LambertMaterial :color="materialColor()"/>
-
-    <Text
-      :text="article"
-      align="center"
-      :size=0.8
-      :height=0.01
-      :position="{ x: 0, y: -0.2, z: 0 }"
-      :rotation="{ x: Math.PI / 2 }"
-      :cast-shadow="true"
-      font-src="https://troisjs.github.io/assets/helvetiker_regular.typeface.json"
-    >
-      <LambertMaterial :color="textColor()"/>
-    </Text>
-  </Box>
+    <Group :position="{ ...data.position, z: data.position.z + computedZ / 2 }">
+        <Box :width=10 :height=10 :depth=10>
+            <LambertMaterial :color="collectionColor()" />
+        </Box>
+    </Group>
 </template>
 
 <style scoped>

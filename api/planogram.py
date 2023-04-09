@@ -4,10 +4,13 @@ from bson.objectid import ObjectId
 
 
 class COLLECTION:
-    def __init__(self, name: str, vendor: str, articles: list[str] = []):
+    def __init__(
+        self, name: str, vendor: str, category: str, product: list[str] = [], **kwargs
+    ):
         self.name = name
         self.vendor = vendor
-        self.articles = articles
+        self.articles = product
+        self.category = category
 
     @property
     def json(self):
@@ -106,11 +109,23 @@ class SHOPWALL:
 class SHOPCOLLECTION:
     """коллекции на плане магазина"""
 
-    def __init__(self, _id: ObjectId, name: str, vendor: str, articles: list):
+    def __init__(
+        self,
+        _id: ObjectId,
+        name: str,
+        vendor: str,
+        articles: list,
+        shopID: str,
+        boxID: str = None,
+        position: dict = {"x": 0, "y": 0, "z": 0},
+    ):
         self._id = _id
         self.name = name
         self.vendor = vendor
         self.articles = articles
+        self.shopID = shopID
+        self.boxID = boxID  # если закреплена за оборудованием
+        self.position = position  # если не закрпелена
 
     @property
     def json(self):
@@ -119,6 +134,27 @@ class SHOPCOLLECTION:
     @property
     def frontend_json(self):
         return {str(self._id): self.json}
+
+    def save(self, db):
+        if not self._id:
+            # create
+
+            ret = db.insert_one(self.json)
+            self._id = ret.inserted_id
+        else:
+            # update
+
+            print(self.json)
+            db.update_one(
+                {"_id": ObjectId(self._id)},
+                {"$set": self.json},
+                upsert=False,
+            )
+
+        return self
+
+    def delete(self, db):
+        db.delete_one({"_id": ObjectId(self._id)})
 
 
 class SHOPBOX:

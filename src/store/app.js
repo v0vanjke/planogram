@@ -45,8 +45,8 @@ export const useAppStore = defineStore('app', () => {
   //📍 MODE
   // roomPlanner -
   // goodsPlanner -
-  const mode = ref('roomPlanner')
-  // const mode = ref('goodsPlanner')
+  // const mode = ref('roomPlanner')
+  const mode = ref('goodsPlanner')
   const changeMode = (m) => {
     mode.value = m
   }
@@ -85,6 +85,7 @@ export const useAppStore = defineStore('app', () => {
   const unoverBox = (boxID) => {
     overBoxID.value.splice(overBoxID.value.indexOf(boxID), 1)
   }
+
   //📍 Selected Boxes
   const isSelectedBox = ref(false)
   const selectedBoxID = ref(null)
@@ -105,8 +106,27 @@ export const useAppStore = defineStore('app', () => {
     selectedBoxID.value = null
   }
 
+  //📍 Collection
+  const selectedCollectionCategory = ref('Обои')
+  const selectedCollectionVendor = ref('Victoria Stenova')
+  // in box
+  const apiCollectionFiltered = computed(() => {
+    const result = []
+    if (!apiStore.apiCollections) return result
+    // filter objects by category and vendor
+    for (const el of apiStore.apiCollections) {
+      if (el.category === selectedCollectionCategory.value && el.vendor === selectedCollectionVendor.value) {
+        result.push(el)
+      }
+    }
+    // return array of objects sorted by key (name)
+    return result.sort((a, b) => {
+      if (a.name < b.name) return -1
+      if (a.name > b.name) return 1
+    })
+  })
 
-  //📍 Over Collection
+  // Over Collection
   const overCollectionID = ref([])
   const overCollection = (collectionID) => {
     overCollectionID.value.push(collectionID)
@@ -114,7 +134,8 @@ export const useAppStore = defineStore('app', () => {
   const unoverCollection = (collectionID) => {
     overCollectionID.value.splice(overCollection.value.indexOf(collectionID), 1)
   }
-  //📍 Selected Collection
+
+  // Selected Collection
   const isSelectedCollection = ref(false)
   const selectedCollectionId = ref(null)
   const selectCollection = () => {
@@ -147,9 +168,10 @@ export const useAppStore = defineStore('app', () => {
     changeMode,
     roomPlannerSubmenu,
 
-    // cameraCtrl,
     cameraAzimuth,
-    // updateCameraCtrl,
+    orbCtrlSettings,
+    eventMouseUp,
+    eventMouseDown,
 
     overBoxID,
     overBox,
@@ -165,15 +187,15 @@ export const useAppStore = defineStore('app', () => {
     unselectBox,
     deleteBox,
 
+
+    selectedCollectionCategory,
+    selectedCollectionVendor,
+    apiCollectionFiltered,
+
     isSelectedCollection,
     selectedCollectionId,
     selectCollection,
     unselectCollection,
 
-
-    orbCtrlSettings,
-
-    eventMouseUp,
-    eventMouseDown,
   }
 })

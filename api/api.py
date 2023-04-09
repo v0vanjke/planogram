@@ -14,6 +14,7 @@ from planogram import BOX
 from planogram import COLLECTION
 from planogram import SHOP
 from planogram import SHOPBOX
+from planogram import SHOPCOLLECTION
 
 from dotenv import load_dotenv
 from os import environ as E
@@ -48,7 +49,7 @@ def get_collections():
     # удалю описание коллекции из ответа
     # нужна мемоизация
     clearable_response = [
-        {k: v for k, v in el.items() if k != "description"}
+        COLLECTION(**{k: v for k, v in el.items()}).json
         for el in resp.json().get("response")
     ]
     return json.dumps({"response": clearable_response}, default=str), 200
@@ -84,6 +85,42 @@ def shop_box(shopID):
         ret.update(SHOPBOX(**el).frontend_json)
     return (
         json.dumps({"response": ret}, default=str),
+        200,
+    )
+
+
+@app.route(
+    "/shop/<shopID>/get/collections",
+    methods=["GET", "POST"],
+    endpoint="shop_collections",
+)
+def shop_collections(shopID):
+    # список коллекций в магазине
+    ret = {}
+    for el in get_table("tapeti", "collections").find({"shopID": shopID}):
+        ret.update(SHOPCOLLECTION(**el).frontend_json)
+    return (
+        json.dumps({"response": ret}, default=str),
+        200,
+    )
+
+
+@app.route(
+    "/shop/<shopID>/add/collection", methods=["POST"], endpoint="shop_collection_add"
+)
+def shop_collection_add(shopID):
+    # привязать оборудование к магазину
+    data = request.json or {}
+    data.update({"shopID": shopID})
+    return (
+        json.dumps(
+            {
+                "response": SHOPCOLLECTION(**data)
+                .save(get_table("tapeti", "collections"))
+                .frontend_json
+            },
+            default=str,
+        ),
         200,
     )
 

@@ -51,6 +51,9 @@ const isOver = computed(() => {
 })
 
 const eventOver = (val) => {
+  if (appStore.isSelectedBox) {
+    return
+    }
   if (val.over === false) {
     appStore.unoverBox(props.boxID)
   } else {
@@ -65,15 +68,15 @@ const fillerColor = () => {
 }
 
 const wallColor = () => {
-  if (isSelected.value) {return 'hsl(80, 100%, 50%)'}
-  if (isOver.value) {return 'hsl(25, 100%, 50%)'}
+  // if (isSelected.value) {return 'hsl(80, 80%, 15%)'}
+  if (isOver.value && !isSelected.value) {return 'hsl(30, 100%, 20%)'}
   return 'hsl(0, 0%, 10%)'
   // return 'hsl(27, 35%, 30%)'
 }
 
 const backWallColor = () => {
-  if (isSelected.value) {return 'hsl(80, 100%, 50%)'}
-  if (isOver.value) {return 'hsl(25, 100%, 50%)'}
+  // if (isSelected.value) {return 'hsl(80, 80%, 15%)'}
+  if (isOver.value && !isSelected.value) {return 'hsl(30, 100%, 20%)'}
   return 'hsl(0, 0%, 10%)'
   // return 'hsl(27, 35%, 30%)'
 }
@@ -117,15 +120,15 @@ const computedZ = computed(() => {
     <!--📍 box 2d proection -->
     <div v-if="isSelected" >
       <RectAreaLight
-        v-if="box.position.z > computedZ / 3"
+        v-if="box.position.z > computedZ / 10"
         :key="`plane-${boxID}`"
         :width="computedX"
         :height="computedY"
-        :position="{z: - (box.position.z + computedZ / 2) + 0.05}"
-        :intensity="6 - box.position.z / 10"
+        :position="{z: - (box.position.z + computedZ / 2) + 0.1}"
+        :intensity="6 - box.position.z / 5"
         :helper="true"
         :rotation="{x: Math.PI}"
-        :color="shadowBoxColor()"
+        :color="shadowBorderColor()"
       > </RectAreaLight>
       <div v-for="i in [1, -1]" :key="i">
         <Plane
@@ -144,6 +147,15 @@ const computedZ = computed(() => {
           <LambertMaterial :color="shadowBorderColor()"/>
         </Plane>
       </div>
+      <!-- ось  -->
+      <Box
+        :width=300
+        :height=0.2
+        :depth=0.2
+        :rotation="{y: Math.PI /2}"
+      >
+        <LambertMaterial :color="shadowBorderColor()"/>
+      </Box>
     </div>
 
 
@@ -192,7 +204,8 @@ const computedZ = computed(() => {
         <LambertMaterial :color="backWallColor()"/>
       </Text>
 
-      <Text
+      <!-- надпись у подножия -->
+      <!-- <Text
         :text="`${Math.round(computedX * 100)} x ${Math.round(computedY * 100)} x ${Math.round(computedZ * 100)} mm`"
         align="center"
         :size="0.5"
@@ -201,7 +214,7 @@ const computedZ = computed(() => {
         font-src="https://troisjs.github.io/assets/helvetiker_regular.typeface.json"
       >
         <LambertMaterial color="hsl(200, 40%, 21%)"/>
-      </Text>
+      </Text> -->
 
     </Box>
 
