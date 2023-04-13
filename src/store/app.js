@@ -5,6 +5,9 @@ import { useApiStore } from "@/store/api";
 
 export const useAppStore = defineStore("app", () => {
   const apiStore = useApiStore();
+  //📍 Typefaces json
+
+  const typeface = "typefaces/Roboto_Regular.json";
 
   //📍 Mouse ClickHandler
   const eventMouseUp = (event) => {
@@ -12,13 +15,13 @@ export const useAppStore = defineStore("app", () => {
       // Режим - ОБОРУДОВАНИЕ
       if (event.button === 0) {
         // Левая кнопка
-        roomPlannerSubmenu.value = false;
+        isSubmenu.value = false;
       }
       if (event.button === 2) {
         if (overBoxID.value.length > 0) {
-          roomPlannerSubmenu.value = !roomPlannerSubmenu.value;
+          isSubmenu.value = !isSubmenu.value;
         } else {
-          roomPlannerSubmenu.value = false;
+          isSubmenu.value = false;
         }
       }
     }
@@ -56,6 +59,7 @@ export const useAppStore = defineStore("app", () => {
       }
     }
   };
+
   //📍 MODE
   // roomPlanner -
   // goodsPlanner -
@@ -109,6 +113,29 @@ export const useAppStore = defineStore("app", () => {
     overBoxID.value.splice(overBoxID.value.indexOf(boxID), 1);
   };
 
+  //📍 Collection in over Box
+  const collectionInOverBox = computed(() => {
+    const result = [];
+    if (overBoxID.value.length === 0) return result;
+    for (const collection of Object.values(apiStore.shopCollections)) {
+      if (collection.boxID === overBoxID.value[0]) {
+        result.push(collection);
+      }
+    }
+    return result;
+  });
+
+  //📍 Collection in Box
+  const collectionInBox = computed(() => {
+    const result = [];
+    for (const collection of Object.values(apiStore.shopCollections)) {
+      if (collection.boxID) {
+        result.push(collection);
+      }
+    }
+    return result;
+  });
+
   //📍 Selected Boxes
   const isSelectedBox = ref(false);
   const selectedBoxID = ref(null);
@@ -159,26 +186,42 @@ export const useAppStore = defineStore("app", () => {
   };
   const unselectCollection = () => {
     // save
-    apiStore.updateShopCollection(selectedCollectionID.value);
+    const boxID = ref(false);
+    if (overBoxID.value.length > 0) {
+      boxID.value = overBoxID.value[0];
+    }
+    apiStore.updateShopCollection(selectedCollectionID.value, boxID.value);
     isSelectedCollection.value = false;
     selectedCollectionID.value = null;
   };
 
   //📍 Submenu
-  const roomPlannerSubmenu = ref(false);
+  const isSubmenu = ref(false);
   watch(
     () => overBoxID.value[0],
     (state) => {
-      if (state) {
-        roomPlannerSubmenu.value = false;
-      }
+      isSubmenu.value = false;
     }
   );
+  //
+  // const goodsPlannerSubmenu = ref(false);
+  // watch(
+  //   () => overBoxID.value[0],
+  //   (state) => {
+  //     if (state && mode.value === "goodsPlanner") {
+  //       goodsPlannerSubmenu.value = false;
+  //     }
+  //   }
+  // );
 
   return {
+    typeface,
+
     mode,
     changeMode,
-    roomPlannerSubmenu,
+    isSubmenu,
+    // roomPlannerSubmenu,
+    // goodsPlannerSubmenu,
 
     cameraAzimuth,
     orbCtrlSettings,
@@ -207,5 +250,7 @@ export const useAppStore = defineStore("app", () => {
     selectedCollectionID,
     selectCollection,
     unselectCollection,
+    collectionInOverBox, // коллекции в выделенном оборудовании
+    collectionInBox, // коллекции прикрепленные к оборудованию
   };
 });

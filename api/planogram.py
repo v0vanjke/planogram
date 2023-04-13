@@ -131,6 +131,10 @@ class SHOPCOLLECTION:
     def json(self):
         return {k: v for k, v in self.__dict__.items() if not k.startswith("_")}
 
+    # @property
+    # def json(self):
+    #     return {k: v for k, v in self.__dict__.items()}
+
     @property
     def frontend_json(self):
         return {str(self._id): self.json}

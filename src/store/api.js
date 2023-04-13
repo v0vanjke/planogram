@@ -19,7 +19,7 @@ export const useApiStore = defineStore("api", () => {
 
   const getRequestData = async (url, data) => {
     const res = await axios({ url: url, data: data });
-    console.log(url, data);
+    // console.log(url, data);
     return res.data.response;
   };
 
@@ -83,7 +83,7 @@ export const useApiStore = defineStore("api", () => {
     snapShopCollection[collectionID].position.z = z;
   };
 
-  const updateShopCollection = (collectionID) => {
+  const updateShopCollection = (collectionID, boxID) => {
     const postHTTP = async (collection) => {
       const req = await getRequestData(
         `shop/${shopID.value}/update/collection`,
@@ -93,6 +93,7 @@ export const useApiStore = defineStore("api", () => {
         console.error("not saved");
       }
     };
+    snapShopCollection[collectionID].boxID = boxID;
     const collection = {
       ...snapShopCollection[collectionID],
       _id: collectionID,

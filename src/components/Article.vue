@@ -1,14 +1,10 @@
 <script setup>
-import { ref, onMounted} from "vue"
-import {
-  Box,
-  LambertMaterial,
-  Text,
-} from 'troisjs';
-import { useApiStore } from '@/store/api';
-import { useAppStore } from '@/store/app';
-const apiStore = useApiStore()
-const appStore = useAppStore()
+import { computed, onMounted } from "vue";
+import { Box, LambertMaterial, Text, Plane } from "troisjs";
+import { useApiStore } from "@/store/api";
+import { useAppStore } from "@/store/app";
+const apiStore = useApiStore();
+const appStore = useAppStore();
 
 const props = defineProps({
   boxID: {
@@ -16,95 +12,71 @@ const props = defineProps({
     type: String,
     required: true,
   },
-  article: {
-    default: "",
-    type: String,
+  inListID: {
+    default: 0,
+    type: Number,
     required: true,
   },
-  collection: {
-    default: "",
-    type: String,
-    required: false,
-  },
-  vendor: {
-    default: "",
-    type: String,
-    required: false,
-  },
-  position: {
-    default: () => {},
-    type: Object,
-    required: true,
-  },
-  boxOver: {
-    default: false,
-    type: Boolean,
-    required: false,
-  }
-})
+});
 
-const over = ref(false)
-const articleOver = (val) => {
-  if (props.boxOver) {
-    over.value = val.over
+//📍 ENTITY
+const box = computed(() => {
+  return apiStore.shopBoxes[props.boxID];
+});
+const article = computed(() => {
+  if (typeof box.value[props.inListID] === "undefined") {
+    return false;
   }
-  if (over.value === true && val === false && isSelected.value === true) {
-    isSelected.value = false
+  return box.articles[props.inListID];
+});
+
+//📍 PROPERTIES ARTICLE ELEMENT
+const size = {
+  x: box.value.size.x - 2,
+  y: 0.2,
+  z: box.value.size.z / box.value.shelf - 0.4,
+};
+const position = {
+  x: 0,
+  y: -(box.value.size.y / 2 + 0.3),
+  z:
+    box.value.size.z / 2 -
+    size.z / 2 -
+    (size.z + 0.2) * (props.inListID - 1) - // шаговое смещение от индекса
+    0.6, // общее смещение вниз
+};
+const rotation = { ...box.rotation, x: Math.PI / 2 };
+
+//📍 COLOR
+const mainColor = () => {
+  if (article.value) {
+    return "grey";
   }
-}
-
-const materialColor = () => {
-  if (over.value) {
-   return 'orange'}
-  return 'white'
-}
-const textColor = () => {
-  if (isSelected.value) {
-    return 'red'
-  }
-  if (over.value) {
-   return 'white'}
-  return 'orange'
-}
-
-const box = ref(null)
-const isSelected = ref(false)
-
-const boxClick = () => {
-  if (appStore.mode === 'goodsPlanner') {
-    isSelected.value = !isSelected.value
-  }
-}
-
+  return "hsl(27, 35%, 30%)";
+};
 </script>
 
 <template>
-  <Box
-    ref="box"
-    :key="`${boxID}-article-${article}`"
-    @pointerOver="articleOver"
-    :height=0.4
-    :width=10
-    :depth=2
+  <Plane
+    :width="size.x"
+    :height="size.z"
     :position="position"
-    @click="boxClick"
+    :rotation="rotation"
   >
-    <LambertMaterial :color="materialColor()"/>
-
+    <LambertMaterial :color="mainColor()" />
     <Text
-      :text="article"
+      v-if="true"
+      :text="article || inListID.toString()"
       align="center"
-      :size=0.8
-      :height=0.01
-      :position="{ x: 0, y: -0.2, z: 0 }"
-      :rotation="{ x: Math.PI / 2 }"
-      :cast-shadow="true"
-      font-src="https://troisjs.github.io/assets/helvetiker_regular.typeface.json"
+      :size="1"
+      :curveSegments="1"
+      :height="0"
+      :position="{ z: 0.1 }"
+      :font-src="appStore.typeface"
     >
-      <LambertMaterial :color="textColor()"/>
+      <LambertMaterial color="black" />
     </Text>
-  </Box>
+  </Plane>
 </template>
 
-<style scoped>
-</style>
+<style scoped></style>

@@ -28,6 +28,7 @@ import {
 import myBox from "@/components/MyBox";
 import Collection from "@/components/Collection";
 import roomPlannerSubmenu from "@/components/menu-room-planner-submenu";
+import goodsPlannerSubmenu from "@/components/menu-goods-planner-submenu";
 import { useApiStore } from "@/store/api";
 import { useAppStore } from "@/store/app";
 const apiStore = useApiStore();
@@ -63,6 +64,14 @@ watch(
     renderer.value.three.cameraCtrl.update();
   }
 );
+watch(
+  // если есть выбранные объекты - перестать вращать камеру
+  () => appStore.isSelectedCollection,
+  (state) => {
+    renderer.value.three.cameraCtrl.enableRotate = !state;
+    renderer.value.three.cameraCtrl.update();
+  }
+);
 
 watch(
   // изменился режим работы - перенастраиваем
@@ -77,7 +86,7 @@ watch(
 
 onMounted(() => {
   const grid = new GridHelper(500, 50, "hsl(80, 100%, 50%)", "hsl(0, 1%, 92%)");
-  grid.material.opacity = 0.1;
+  grid.material.opacity = 0.3;
   grid.material.transparent = true;
   grid.position.y = 0.05;
   scene.value.add(grid);
@@ -85,6 +94,7 @@ onMounted(() => {
   const positionV3 = renderer.value.three.pointer.positionV3;
 
   const cameraCtrl = renderer.value.three.cameraCtrl;
+  console.log(cameraCtrl);
   const frameN = ref(0);
   // console.log(cameraCtrl)
 
@@ -107,12 +117,12 @@ onMounted(() => {
       lastX.value = Math.round(positionV3.x);
       lastY.value = -Math.round(positionV3.z);
       lastZ.value = Math.round(positionV3.y);
+      if (lastZ.value < 0) {
+        lastZ.value = 0;
+      }
 
       if (appStore.isSelectedBox) {
         // выбрано оборудование. будем следить и двигать его туда сюда обратно
-        if (lastZ.value < 0) {
-          lastZ.value = 0;
-        }
         apiStore.moveShopBox(
           appStore.selectedBoxID,
           lastX.value,
@@ -121,9 +131,7 @@ onMounted(() => {
         );
       }
       if (appStore.isSelectedCollection) {
-        if (lastZ.value < 0) {
-          lastZ.value = 0;
-        }
+        // вычислим высоту выделенного оборудования - чтобы поднять коллекцию над ним
         apiStore.moveShopCollection(
           appStore.selectedCollectionID,
           lastX.value,
@@ -134,6 +142,12 @@ onMounted(() => {
     }
   });
 });
+const loaded = ref(false);
+onMounted(() => {
+  setTimeout(() => {
+    loaded.value = true;
+  }, 1000);
+});
 </script>
 <template>
   <!-- pointer -->
@@ -141,21 +155,26 @@ onMounted(() => {
     @mousedown="appStore.eventMouseDown"
     @mouseup="appStore.eventMouseUp"
     ref="renderer"
-    antialias
+    :autoClear="false"
+    :antialias="true"
+    :alpha="true"
+    :shadow="false"
     resize
-    pointer
-    shadow
     :orbit-ctrl="appStore.orbCtrlSettings"
   >
     <Camera :position="{ x: 0, y: 500, z: 0 }" />
 
     <Scene ref="scene" background="hsl(0, 0%, 60%)">
-      <AmbientLight color="hsl(0, 0%, 100%)" />
+      <AmbientLight
+        :position="{ x: 100, y: 500, z: 0 }"
+        color="hsl(0, 0%, 100%)"
+      />
       <!-- если выключить - будет как бы ночь -->
-      <HemisphereLight />
-      <DirectionalLight cast-shadow :position="{ x: 100, y: 200, z: 100 }" />
+      <HemisphereLight :position="{ x: 100, y: 400, z: 0 }" />
+      <DirectionalLight :position="{ x: 100, y: 500, z: 0 }" />
 
       <SpotLight
+        v-if="false"
         cast-shadow
         color="hsl(0, 0%, 100%)"
         :intensity="0.2"
@@ -165,6 +184,7 @@ onMounted(() => {
         :shadow-map-size="{ width: 2048, height: 2048 }"
       />
       <SpotLight
+        v-if="false"
         cast-shadow
         color="hsl(0, 0%, 100%)"
         :intensity="0.2"
@@ -175,6 +195,7 @@ onMounted(() => {
       />
 
       <SpotLight
+        v-if="false"
         cast-shadow
         color="hsl(0, 0%, 100%)"
         :intensity="0.5"
@@ -184,6 +205,7 @@ onMounted(() => {
         :shadow-map-size="{ width: 2048, height: 2048 }"
       />
       <SpotLight
+        v-if="false"
         cast-shadow
         color="hsl(0, 0%, 100%)"
         :intensity="0.5"
@@ -236,16 +258,17 @@ onMounted(() => {
         receive-shadow
         :rotation="{ x: -Math.PI / 2 }"
       >
-        <Collection
-          v-for="(v, collectionID) in apiStore.shopCollections"
-          :key="collectionID"
-          :id="collectionID"
-        />
         <myBox
           v-for="(v, boxID) in apiStore.shopBoxes"
           :key="boxID"
           :boxID="boxID"
           :box="v"
+        />
+        <Collection
+          v-if="appStore.mode !== 'roomPlanner' && loaded"
+          v-for="collectionID in Object.keys(apiStore.shopCollections)"
+          :key="collectionID"
+          :id="collectionID"
         />
         <PhongMaterial
           color="hsl(200, 50%, 15%)"
@@ -255,7 +278,11 @@ onMounted(() => {
     </Scene>
   </Renderer>
   <roomPlannerSubmenu
-    v-if="appStore.roomPlannerSubmenu"
+    v-if="appStore.isSubmenu && appStore.mode === 'roomPlanner'"
+    :position="getPosition2D()"
+  />
+  <goodsPlannerSubmenu
+    v-if="appStore.isSubmenu && appStore.mode === 'goodsPlanner'"
     :position="getPosition2D()"
   />
   <v-card class="helperCard" v-if="true">

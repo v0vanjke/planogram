@@ -84,15 +84,12 @@ const backWallColor = () => {
   return "hsl(0, 0%, 10%)";
   // return 'hsl(27, 35%, 30%)'
 };
-const shadowBoxColor = () => {
-  return "hsl(195, 80%, 10%)";
-};
 const shadowBorderColor = () => {
   return "hsl(95, 100%, 30%)";
 };
 
 const numberColor = () => {
-  return "hsl(200, 30%, 20%)";
+  return "hsl(200, 40%, 20%)";
 };
 
 const numberTextColor = () => {
@@ -101,15 +98,22 @@ const numberTextColor = () => {
 
 //📍 BOX SIZES
 const computedX = computed(() => {
-  const normalizedSize = Math.round(props.box.size.x) - 0.06;
+  const normalizedSize = Math.round(props.box.size.x) - 0.12;
   return normalizedSize;
 });
 const computedY = computed(() => {
-  const normalizedSize = Math.round(props.box.size.y) - 0.06;
+  const normalizedSize = Math.round(props.box.size.y) - 0.12;
   return normalizedSize;
 });
 const computedZ = computed(() => {
   return props.box.size.z;
+});
+
+const loaded = ref(false);
+onMounted(() => {
+  setTimeout(() => {
+    loaded.value = true;
+  }, 1000 + Math.floor(Math.random() * 1000));
 });
 </script>
 
@@ -200,53 +204,52 @@ const computedZ = computed(() => {
 
       <!-- кол-во полок -->
       <Text
+        v-if="appStore.mode === 'roomPlanner'"
         :text="`${box.shelf}`"
         align="center"
         :size="3"
+        :curveSegments="1"
         :height="0"
         :position="{ z: computedZ / 2 - thickness / 4 + 0.05 }"
         :rotation="{ z: Math.PI * 2 - box.rotation.z + appStore.cameraAzimuth }"
-        font-src="https://troisjs.github.io/assets/helvetiker_regular.typeface.json"
+        :font-src="appStore.typeface"
       >
         <LambertMaterial :color="backWallColor()" />
       </Text>
-
-      <!-- надпись у подножия -->
-      <!-- <Text
-            :text="`${Math.round(computedX * 100)} x ${Math.round(computedY * 100)} x ${Math.round(computedZ * 100)} mm`"
-            align="center"
-            :size="0.5"
-            :height="0"
-            :position="{y: -computedY / 2 - thickness, z: - computedZ / 2 + 0.1}"
-            font-src="https://troisjs.github.io/assets/helvetiker_regular.typeface.json"
-          >
-            <LambertMaterial color="hsl(200, 40%, 21%)"/>
-          </Text> -->
     </Box>
 
     <!--📍 box number -->
     <Circle
-      :radius="box.index > 999 ? 2 : 1.6"
-      :segments="20"
+      v-if="true"
+      :radius="box.index > 999 ? 2.2 : 1.9"
+      :segments="6"
       :rotation="{ z: Math.PI * 2 - box.rotation.z + appStore.cameraAzimuth }"
       :position="{
-        x: -computedX / 2 + 1.8,
-        y: computedY / 2 - 1.4,
-        z: computedZ / 2 + 0.05,
+        y: -computedY / 1.2,
+        z: -computedZ / 2 + 0.3,
       }"
     >
       <LambertMaterial :color="numberColor()" />
       <Text
+        v-if="true"
         :text="`${box.index}`"
         align="center"
         :size="box.index > 9 ? 1.4 : 1.2"
+        :curveSegments="1"
         :height="0"
         :position="{ z: 0.05 }"
-        font-src="https://troisjs.github.io/assets/helvetiker_regular.typeface.json"
+        :font-src="appStore.typeface"
       >
         <LambertMaterial :color="numberTextColor()" />
       </Text>
     </Circle>
+
+    <!--📍 articles -->
+    <div v-if="appStore.mode !== 'roomPlanner' && loaded">
+      <div v-for="i in box.shelf" :key="i">
+        <Article :boxID="boxID" :inListID="i" />
+      </div>
+    </div>
   </Group>
 </template>
 
